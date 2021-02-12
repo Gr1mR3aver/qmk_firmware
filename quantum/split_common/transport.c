@@ -22,6 +22,10 @@ static pin_t encoders_pad[] = ENCODERS_PAD_A;
 #    define NUMBER_OF_ENCODERS (sizeof(encoders_pad) / sizeof(pin_t))
 #endif
 
+#ifdef RGB_MATRIX_SPLIT
+#    include "rgb_matrix.h"
+#endif
+
 #if defined(USE_I2C)
 
 #    include "i2c_master.h"
@@ -30,6 +34,9 @@ static pin_t encoders_pad[] = ENCODERS_PAD_A;
 typedef struct _I2C_slave_buffer_t {
 #    ifndef DISABLE_SYNC_TIMER
     uint32_t sync_timer;
+#    endif
+#    ifdef SPLIT_TRANSPORT_MIRROR
+    matrix_row_t mmatrix[ROWS_PER_HAND];
 #    endif
     matrix_row_t smatrix[ROWS_PER_HAND];
 #    ifdef SPLIT_MODS_ENABLE
@@ -51,12 +58,16 @@ typedef struct _I2C_slave_buffer_t {
 #    ifdef WPM_ENABLE
     uint8_t current_wpm;
 #    endif
+#    ifdef RGB_MATRIX_SPLIT
+    rgb_config_t rgb_matrix;
+#    endif
 } I2C_slave_buffer_t;
 
 static I2C_slave_buffer_t *const i2c_buffer = (I2C_slave_buffer_t *)i2c_slave_reg;
 
 #    define I2C_SYNC_TIME_START offsetof(I2C_slave_buffer_t, sync_timer)
-#    define I2C_KEYMAP_START offsetof(I2C_slave_buffer_t, smatrix)
+#    define I2C_KEYMAP_MASTER_START offsetof(I2C_slave_buffer_t, mmatrix)
+#    define I2C_KEYMAP_SLAVE_START offsetof(I2C_slave_buffer_t, smatrix)
 #    define I2C_REAL_MODS_START offsetof(I2C_slave_buffer_t, real_mods)
 #    define I2C_WEAK_MODS_START offsetof(I2C_slave_buffer_t, weak_mods)
 #    define I2C_ONESHOT_MODS_START offsetof(I2C_slave_buffer_t, oneshot_mods)
@@ -64,6 +75,7 @@ static I2C_slave_buffer_t *const i2c_buffer = (I2C_slave_buffer_t *)i2c_slave_re
 #    define I2C_RGB_START offsetof(I2C_slave_buffer_t, rgblight_sync)
 #    define I2C_ENCODER_START offsetof(I2C_slave_buffer_t, encoder_state)
 #    define I2C_WPM_START offsetof(I2C_slave_buffer_t, current_wpm)
+#    define I2C_RGB_MATRIX_START offsetof(I2C_slave_buffer_t, rgb_matrix)
 
 #    define TIMEOUT 100
 
@@ -72,8 +84,11 @@ static I2C_slave_buffer_t *const i2c_buffer = (I2C_slave_buffer_t *)i2c_slave_re
 #    endif
 
 // Get rows from other half over i2c
-bool transport_master(matrix_row_t matrix[]) {
-    i2c_readReg(SLAVE_I2C_ADDRESS, I2C_KEYMAP_START, (void *)matrix, sizeof(i2c_buffer->smatrix), TIMEOUT);
+bool transport_master(matrix_row_t master_matrix[], matrix_row_t slave_matrix[]) {
+    i2c_readReg(SLAVE_I2C_ADDRESS, I2C_KEYMAP_SLAVE_START, (void *)slave_matrix, sizeof(i2c_buffer->smatrix), TIMEOUT);
+#ifdef SPLIT_TRANSPORT_MIRROR
+    i2c_writeReg(SLAVE_I2C_ADDRESS, I2C_KEYMAP_MASTER_START, (void *)master_matrix, sizeof(i2c_buffer->mmatrix), TIMEOUT);
+#endif
 
     // write backlight info
 #    ifdef BACKLIGHT_ENABLE
@@ -134,6 +149,10 @@ bool transport_master(matrix_row_t matrix[]) {
 #        endif
 #    endif
 
+#    ifdef RGB_MATRIX_SPLIT
+    i2c_writeReg(SLAVE_I2C_ADDRESS, I2C_RGB_MATRIX_START, (void *)rgb_matrix_config, sizeof(i2c_buffer->rgb_matrix), TIMEOUT);
+#    endif
+
 #    ifndef DISABLE_SYNC_TIMER
     i2c_buffer->sync_timer = sync_timer_read32() + SYNC_TIMER_OFFSET;
     i2c_writeReg(SLAVE_I2C_ADDRESS, I2C_SYNC_TIME_START, (void *)&i2c_buffer->sync_timer, sizeof(i2c_buffer->sync_timer), TIMEOUT);
@@ -141,12 +160,15 @@ bool transport_master(matrix_row_t matrix[]) {
     return true;
 }
 
-void transport_slave(matrix_row_t matrix[]) {
+void transport_slave(matrix_row_t master_matrix[], matrix_row_t slave_matrix[]) {
 #    ifndef DISABLE_SYNC_TIMER
     sync_timer_update(i2c_buffer->sync_timer);
 #    endif
     // Copy matrix to I2C buffer
-    memcpy((void *)i2c_buffer->smatrix, (void *)matrix, sizeof(i2c_buffer->smatrix));
+    memcpy((void*)i2c_buffer->smatrix, (void *)slave_matrix, sizeof(i2c_buffer->smatrix));
+#ifdef SPLIT_TRANSPORT_MIRROR
+    memcpy((void*)master_matrix, (void *)i2c_buffer->mmatrix, sizeof(i2c_buffer->mmatrix));
+#endif
 
 // Read Backlight Info
 #    ifdef BACKLIGHT_ENABLE
@@ -175,6 +197,10 @@ void transport_slave(matrix_row_t matrix[]) {
 #        ifndef NO_ACTION_ONESHOT
     set_oneshot_mods(i2c_buffer->oneshot_mods);
 #        endif
+#    endif
+
+#    ifdef RGB_MATRIX_SPLIT
+    memcpy((void*)i2c_buffer->rgb_matrix, (void *)rgb_matrix_config, sizeof(i2c_buffer->rgb_matrix));
 #    endif
 }
 
@@ -207,11 +233,17 @@ typedef struct _Serial_m2s_buffer_t {
 #    ifndef DISABLE_SYNC_TIMER
     uint32_t sync_timer;
 #    endif
+#    ifdef SPLIT_TRANSPORT_MIRROR
+    matrix_row_t mmatrix[ROWS_PER_HAND];
+#    endif
 #    ifdef BACKLIGHT_ENABLE
     uint8_t  backlight_level;
 #    endif
 #    ifdef WPM_ENABLE
     uint8_t  current_wpm;
+#    endif
+#    ifdef RGB_MATRIX_SPLIT
+    rgb_config_t rgb_matrix;
 #    endif
 } Serial_m2s_buffer_t;
 
@@ -289,7 +321,7 @@ void transport_rgblight_slave(void) {
 #        define transport_rgblight_slave()
 #    endif
 
-bool transport_master(matrix_row_t matrix[]) {
+bool transport_master(matrix_row_t master_matrix[], matrix_row_t slave_matrix[]) {
 #    ifndef SERIAL_USE_MULTI_TRANSACTION
     if (soft_serial_transaction() != TRANSACTION_END) {
         return false;
@@ -303,7 +335,10 @@ bool transport_master(matrix_row_t matrix[]) {
 
     // TODO:  if MATRIX_COLS > 8 change to unpack()
     for (int i = 0; i < ROWS_PER_HAND; ++i) {
-        matrix[i] = serial_s2m_buffer.smatrix[i];
+        slave_matrix[i] = serial_s2m_buffer.smatrix[i];
+#ifdef SPLIT_TRANSPORT_MIRROR
+        serial_m2s_buffer.mmatrix[i] = master_matrix[i];
+#endif
     }
 
 #    ifdef BACKLIGHT_ENABLE
@@ -327,13 +362,18 @@ bool transport_master(matrix_row_t matrix[]) {
     serial_m2s_buffer.oneshot_mods = get_oneshot_mods();
 #        endif
 #    endif
+
+#    ifdef RGB_MATRIX_SPLIT
+    serial_m2s_buffer.rgb_matrix = rgb_matrix_config;
+#    endif
+
 #    ifndef DISABLE_SYNC_TIMER
     serial_m2s_buffer.sync_timer   = sync_timer_read32() + SYNC_TIMER_OFFSET;
 #    endif
     return true;
 }
 
-void transport_slave(matrix_row_t matrix[]) {
+void transport_slave(matrix_row_t master_matrix[], matrix_row_t slave_matrix[]) {
     transport_rgblight_slave();
 #    ifndef DISABLE_SYNC_TIMER
     sync_timer_update(serial_m2s_buffer.sync_timer);
@@ -341,7 +381,10 @@ void transport_slave(matrix_row_t matrix[]) {
 
     // TODO: if MATRIX_COLS > 8 change to pack()
     for (int i = 0; i < ROWS_PER_HAND; ++i) {
-        serial_s2m_buffer.smatrix[i] = matrix[i];
+        serial_s2m_buffer.smatrix[i] = slave_matrix[i];
+#ifdef SPLIT_TRANSPORT_MIRROR
+        master_matrix[i] = serial_m2s_buffer.mmatrix[i];
+#endif
     }
 #    ifdef BACKLIGHT_ENABLE
     backlight_set(serial_m2s_buffer.backlight_level);
@@ -361,6 +404,10 @@ void transport_slave(matrix_row_t matrix[]) {
 #        ifndef NO_ACTION_ONESHOT
     set_oneshot_mods(serial_m2s_buffer.oneshot_mods);
 #        endif
+#    endif
+
+#    ifdef RGB_MATRIX_SPLIT
+    rgb_matrix_config = serial_m2s_buffer.rgb_matrix;
 #    endif
 }
 
