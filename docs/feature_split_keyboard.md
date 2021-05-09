@@ -8,7 +8,7 @@ QMK Firmware has a generic implementation that is usable by any board, as well a
 
 For this, we will mostly be talking about the generic implementation used by the Let's Split and other keyboards. 
 
-!> ARM split is almost completely functional, and supports most QMK subsystems using the 'serial' and 'serial_usart' drivers. I2C slave is currently unsupported, and as such we have not yet reached 100% feature parity with AVR.
+!> ARM split supports most QMK subsystems when using the 'serial' and 'serial_usart' drivers. I2C slave is currently unsupported.
 
 ## Compatibility Overview
 
@@ -45,7 +45,7 @@ However, USB cables, SATA cables, and even just 4 wires have been known to be us
 
 !> Using USB cables for communication between the controllers works just fine, but the connector could be mistaken for a normal USB connection and potentially short out the keyboard, depending on how it's wired.  For this reason, they are not recommended for connecting split keyboards.  
 
-### Serial Wiring (AVR)
+### Serial Wiring
 
 The 3 wires of the TRS/TRRS cable need to connect GND, VCC, and D0/D1/D2/D3 (aka PD0/PD1/PD2/PD3) between the two Pro Micros. 
 
@@ -54,7 +54,7 @@ The 3 wires of the TRS/TRRS cable need to connect GND, VCC, and D0/D1/D2/D3 (aka
 <img alt="sk-pd0-connection-mono" src="https://user-images.githubusercontent.com/2170248/92296488-28e9ad80-ef70-11ea-98be-c40cb48a0319.JPG" width="48%"/>
 <img alt="sk-pd2-connection-mono" src="https://user-images.githubusercontent.com/2170248/92296490-2d15cb00-ef70-11ea-801f-5ace313013e6.JPG" width="48%"/>
 
-### I<sup>2</sup>C Wiring (AVR)
+### I<sup>2</sup>C Wiring
 
 The 4 wires of the TRRS cable need to connect GND, VCC, and SCL and SDA (aka PD0/pin 3 and PD1/pin 2, respectively) between the two Pro Micros. 
 
