@@ -263,11 +263,14 @@ void housekeeping_task_user(void) {
         // Interact with slave every 500ms
         static uint32_t last_sync = 0;
         if (timer_elapsed32(last_sync) > 500) {
-            last_sync = timer_read32();
             master_to_slave_t m2s = {6};
             slave_to_master_t s2m = {0};
-            transaction_rpc_exec(USER_SYNC_A, sizeof(m2s), &m2s, sizeof(s2m), &s2m);
-            dprintf("Slave value: %d\n", s2m.s2m_data); // this will now be 11, as the slave adds 5
+            if(transaction_rpc_exec(USER_SYNC_A, sizeof(m2s), &m2s, sizeof(s2m), &s2m)) {
+                last_sync = timer_read32();
+                dprintf("Slave value: %d\n", s2m.s2m_data); // this will now be 11, as the slave adds 5
+            } else {
+                dprint("Slave sync failed!\n");
+            }
         }
     }
 }
