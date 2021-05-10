@@ -276,6 +276,8 @@ void housekeeping_task_user(void) {
 }
 ```
 
+!> It is recommended that any data sync between halves happens during the master side's _housekeeping task_. This ensures timely retries should failures occur.
+
 If only one-way data transfer is needed, helper methods are provided:
 
 ```c
