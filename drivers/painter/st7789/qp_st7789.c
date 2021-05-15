@@ -123,6 +123,7 @@ painter_device_t qp_st7789_make_device(pin_t chip_select_pin, pin_t data_pin, pi
             driver->qp_driver.circle    = qp_st77xx_circle;
             driver->qp_driver.ellipse   = qp_fallback_ellipse;
             driver->qp_driver.drawimage = qp_st77xx_drawimage;
+            driver->qp_driver.drawtext  = qp_st77xx_drawtext;
             driver->chip_select_pin     = chip_select_pin;
             driver->data_pin            = data_pin;
             driver->reset_pin           = reset_pin;
