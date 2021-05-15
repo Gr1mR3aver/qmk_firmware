@@ -30,6 +30,18 @@
 #   undef LCD_SPI_MODE
 #endif
 
+#ifdef LCD_HEIGHT
+#   undef LCD_HEIGHT
+#endif
+
+#define LCD_HEIGHT 320
+
+#ifdef LCD_WIDTH
+#   undef LCD_WIDTH
+#endif
+
+#define LCD_WIDTH 240
+
 #define LCD_SPI_MODE 3
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
