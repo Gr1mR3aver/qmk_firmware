@@ -214,13 +214,14 @@ bool st77xx_drawimage_uncompressed_impl(st77xx_painter_device_t *lcd, painter_im
     if (image_format == IMAGE_FORMAT_RAW || image_format == IMAGE_FORMAT_RGB565) {
         // The pixel data is in the correct format already -- send it directly to the device
         qp_st77xx_internal_lcd_sendbuf(lcd, pixel_data, byte_count);
-    } else if (image->image_format == IMAGE_FORMAT_GRAYSCALE) {
+    } else if (image_format == IMAGE_FORMAT_GRAYSCALE) {
         // Supplied pixel data is in 4bpp monochrome -- decode it to the equivalent pixel data
         lcd_send_mono_pixdata_recolor(lcd, image_bpp, pixel_count, pixel_data, byte_count, hue_fg, sat_fg, val_fg, hue_bg, sat_bg, val_bg);
-    } else if (image->image_format == IMAGE_FORMAT_PALETTE) {
+    } else if (image_format == IMAGE_FORMAT_PALETTE) {
         // Supplied pixel data is in 1bpp monochrome -- decode it to the equivalent pixel data
         lcd_send_palette_pixdata(lcd, palette_data, image_bpp, pixel_count, pixel_data, byte_count);
     }
+    return true;
 }
 
 // Manually set a single pixel's color
@@ -629,7 +630,7 @@ int16_t qp_st77xx_drawtext(painter_device_t device, uint16_t x, uint16_t y, pain
                         if (glyph_desc->unicode_glyph == code_point) {
                             uint16_t byte_count = (index == fdesc->unicode_glyph_count - 1) ? (fdesc->byte_count - glyph_desc->offset) : ((glyph_desc + 1)->offset - glyph_desc->offset);
                             qp_st77xx_internal_lcd_viewport(lcd, x, y, x + glyph_desc->width - 1, y + font->glyph_height - 1);
-                            drawimage_uncompressed_impl(lcd, font->image_format, font->image_bpp, &fdesc->image_data[glyph_desc->offset], byte_count, glyph_desc->width, font->glyph_height, fdesc->image_palette, hue_fg, sat_fg, val_fg, hue_bg, sat_bg, val_bg);
+                            st77xx_drawimage_uncompressed_impl(lcd, font->image_format, font->image_bpp, &fdesc->image_data[glyph_desc->offset], byte_count, glyph_desc->width, font->glyph_height, fdesc->image_palette, hue_fg, sat_fg, val_fg, hue_bg, sat_bg, val_bg);
                             x += glyph_desc->width;
                         }
                     }
