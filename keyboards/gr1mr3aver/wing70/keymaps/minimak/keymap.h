@@ -17,24 +17,6 @@
 #pragma once
 
 #include QMK_KEYBOARD_H
-#include "features/config_menu/menu.h"
-#include "features/display/display.h"
-#ifdef PONG_ENABLE
-#   include "games/pong/pong.h"
-#endif
-
-enum {
-    ALPHA,
-    MEDIA,
-    GRAVE,
-    ACUTE,
-    UMLAUT,
-    EXTRA,
-    DEVEL,
-    SPECIAL,
-    ADMIN,
-    CONFIG
-};
 
 enum custom_keycodes {
     ACCENT_0 = SAFE_RANGE,

@@ -22,6 +22,15 @@
 #include <qp_st7789.h>
 #include "graphics/gif/gif.h"
 
+/* redefine LCD height/width */
+
+#ifdef LCD_HEIGHT
+#   undef LCD_HEIGHT
+#endif
+#ifdef LCD_WIDTH
+#   undef LCD_WIDTH
+#endif
+
 #define LCD_HEIGHT 320
 #define LCD_WIDTH 240
 

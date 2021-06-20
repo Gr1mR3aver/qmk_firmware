@@ -45,6 +45,6 @@ OPT = 2
 #OPT_DEFS += -g
 
 LUA_ENABLE = no
-#$(shell python3 build_menu.py)
 
-SRC += graphics/gif/gif.c
+QUANTUM_PAINTER_ENABLE = yes
+QUANTUM_PAINTER_DRIVERS = st7789

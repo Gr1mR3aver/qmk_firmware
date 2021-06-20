@@ -132,7 +132,7 @@ void bounce_ball_x(pong_ball_t *ball, uint16_t min_x, uint16_t max_x) {
 
         offset_fraction = (ball->position.y - paddle_middle) / paddle_range;
 
-        radians = 0.25 * M_PI * offset_fraction;
+        radians = 0.25 * M_PI * (2 * offset_fraction);
 
         pong_state.paddle_collision_count++;
         if (pong_state.paddle_collision_count > PADDLE_HITS_ACCELERATE) {

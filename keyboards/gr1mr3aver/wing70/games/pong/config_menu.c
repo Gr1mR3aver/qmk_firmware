@@ -103,12 +103,6 @@ menu_entry_t court_entries[] = {
     }
 }
 
-menu_entry_t line_entries[] = {
-}
-
-menu_entry_t net_entries[] = {
-}
-
 menu_entry_t game_entries [] = {
     {
         .flags                 = menu_flag_is_value,
@@ -121,44 +115,31 @@ menu_entry_t game_entries [] = {
         .text                  = "RGB enabled",
         .child.menu_handler    = menu_handler_rgbenabled,
         .child.display_handler = display_handler_rgbenabled,
-    },
-
+    }
 }
 menu_entry_t pong_entries[] = {
     {
-        .flags                 = menu_flag_is_value,
-        .text                  = "RGB enabled",
-        .child.menu_handler    = menu_handler_rgbenabled,
-        .child.display_handler = display_handler_rgbenabled,
+        .flags              = menu_flag_is_parent,
+        .text               = "Game settings",
+        .parent.children    = game_entries,
+        .parent.child_count = sizeof(game_entries) / sizeof(game_entries[0]),
     },
     {
-        .flags                 = menu_flag_is_value,
-        .text                  = "RGB mode",
-        .child.menu_handler    = menu_handler_rgbmode,
-        .child.display_handler = display_handler_rgbmode,
+        .flags              = menu_flag_is_parent,
+        .text               = "Court",
+        .parent.children    = court_entries,
+        .parent.child_count = sizeof(court_entries) / sizeof(court_entries[0]),
     },
     {
-        .flags                 = menu_flag_is_value,
-        .text                  = "RGB hue",
-        .child.menu_handler    = menu_handler_rgbhue,
-        .child.display_handler = display_handler_rgbhue,
+        .flags              = menu_flag_is_parent,
+        .text               = "Paddle",
+        .parent.children    = paddle_entries,
+        .parent.child_count = sizeof(paddle_entries) / sizeof(paddle_entries[0]),
     },
     {
-        .flags                 = menu_flag_is_value,
-        .text                  = "RGB saturation",
-        .child.menu_handler    = menu_handler_rgbsat,
-        .child.display_handler = display_handler_rgbsat,
-    },
-    {
-        .flags                 = menu_flag_is_value,
-        .text                  = "RGB value",
-        .child.menu_handler    = menu_handler_rgbval,
-        .child.display_handler = display_handler_rgbval,
-    },
-    {
-        .flags                 = menu_flag_is_value,
-        .text                  = "RGB speed",
-        .child.menu_handler    = menu_handler_rgbspeed,
-        .child.display_handler = display_handler_rgbspeed,
-    },
+        .flags              = menu_flag_is_parent,
+        .text               = "Ball",
+        .parent.children    = ball_entries,
+        .parent.child_count = sizeof(ball_entries) / sizeof(ball_entries[0]),
+    }
 };
